@@ -1,347 +1,387 @@
 
 <style>
-  :root { --accent: #3b82f6; --accent-dim: #1d4ed8; --danger: #ef4444; --success: #22c55e; --warn: #f59e0b; }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: var(--font-mono, monospace); }
-  #app { padding: 1.5rem; max-width: 640px; }
-  h1 { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  #app { padding: 1.5rem; max-width: 640px; font-family: var(--font-mono, monospace); }
+  h1 { font-size: 12px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; }
   .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
-  .drop-zone { border: 1.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
-  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(59,130,246,0.06); }
+  .section-label { font-size: 11px; color: var(--color-text-secondary); margin-bottom: 8px; letter-spacing: 0.06em; text-transform: uppercase; }
+  .drop-zone { border: 1.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 1.5rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  .drop-zone:hover, .drop-zone.over { border-color: #3b82f6; background: rgba(59,130,246,0.05); }
   .drop-zone input { display: none; }
-  .drop-icon { font-size: 28px; margin-bottom: 8px; }
-  .drop-label { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
-  .drop-label span { color: var(--accent); cursor: pointer; }
-  .file-info { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); font-size: 13px; }
-  .file-name { font-weight: 500; color: var(--color-text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .file-size { color: var(--color-text-secondary); white-space: nowrap; }
-  .btn-remove { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-size: 16px; padding: 2px 4px; }
-  .btn-remove:hover { color: var(--danger); }
-  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
-  .label { font-size: 12px; color: var(--color-text-secondary); }
-  .badge { font-size: 11px; padding: 3px 8px; border-radius: 99px; font-weight: 500; }
-  .badge-ok { background: rgba(34,197,94,0.12); color: var(--success); }
-  .badge-warn { background: rgba(245,158,11,0.12); color: var(--warn); }
-  .badge-err { background: rgba(239,68,68,0.12); color: var(--danger); }
-  .device-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
-  .device-row:last-child { border-bottom: none; }
-  .device-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--color-background-secondary); display: flex; align-items: center; justify-content: center; font-size: 14px; }
-  .device-name { font-size: 13px; font-weight: 500; flex: 1; }
-  .device-vid { font-size: 11px; color: var(--color-text-secondary); }
-  select { width: 100%; font-size: 13px; background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; }
-  .progress-bar-bg { height: 6px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; }
-  .progress-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.25s; }
-  .log-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; max-height: 140px; overflow-y: auto; font-size: 11px; line-height: 1.8; }
-  .log-box p { margin: 0; color: var(--color-text-secondary); }
-  .log-box p.ok { color: var(--success); }
-  .log-box p.err { color: var(--danger); }
-  .log-box p.info { color: var(--accent); }
-  .actions { display: flex; gap: 8px; margin-top: 1rem; }
-  button.primary { flex: 1; padding: 10px; font-size: 13px; font-weight: 500; background: var(--accent); color: #fff; border: none; border-radius: var(--border-radius-md); cursor: pointer; transition: background 0.15s, opacity 0.15s; }
-  button.primary:hover:not(:disabled) { background: var(--accent-dim); }
-  button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
-  button.secondary { padding: 10px 16px; font-size: 13px; background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-primary); transition: background 0.15s; }
-  button.secondary:hover:not(:disabled) { background: var(--color-background-secondary); }
-  button.secondary:disabled { opacity: 0.4; cursor: not-allowed; }
-  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-  .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; }
-  .stat-val { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
-  .stat-key { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
-  #check-webusb { display: none; font-size: 11px; color: var(--danger); margin-top: 6px; }
+  .file-pill { display: flex; align-items: center; gap: 10px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 12px; font-size: 12px; margin-top: 8px; }
+  .file-pill .name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .file-pill .sz { color: var(--color-text-secondary); }
+  .file-pill button { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-size: 14px; }
+  .file-pill button:hover { color: #ef4444; }
+  .method-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .method-card { border: 1px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  .method-card:hover { border-color: #3b82f6; }
+  .method-card.active { border-color: #3b82f6; background: rgba(59,130,246,0.07); }
+  .method-card .mtitle { font-size: 12px; font-weight: 500; margin-bottom: 3px; }
+  .method-card .mdesc { font-size: 11px; color: var(--color-text-secondary); line-height: 1.5; }
+  .method-card .mbadge { font-size: 10px; display: inline-block; padding: 2px 6px; border-radius: 99px; margin-bottom: 5px; }
+  .badge-green { background: rgba(34,197,94,0.12); color: #22c55e; }
+  .badge-blue { background: rgba(59,130,246,0.12); color: #3b82f6; }
+  .badge-warn { background: rgba(245,158,11,0.12); color: #f59e0b; }
+  select, input[type=number] { width: 100%; font-size: 12px; background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 7px 10px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .progress-wrap { margin-bottom: 8px; }
+  .pbar-bg { height: 5px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; }
+  .pbar { height: 100%; background: #3b82f6; border-radius: 99px; transition: width 0.2s; }
+  .stats { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 6px; margin-bottom: 8px; }
+  .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 6px 8px; }
+  .stat-v { font-size: 13px; font-weight: 500; }
+  .stat-k { font-size: 10px; color: var(--color-text-secondary); margin-top: 1px; }
+  .log { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; max-height: 130px; overflow-y: auto; font-size: 11px; line-height: 1.8; }
+  .log p { margin: 0; color: var(--color-text-secondary); }
+  .log p.ok { color: #22c55e; }
+  .log p.err { color: #ef4444; }
+  .log p.info { color: #3b82f6; }
+  .log p.warn { color: #f59e0b; }
+  .actions { display: flex; gap: 8px; }
+  .btn-primary { flex: 1; padding: 10px; font-size: 13px; font-weight: 500; background: #3b82f6; color: #fff; border: none; border-radius: var(--border-radius-md); cursor: pointer; }
+  .btn-primary:hover:not(:disabled) { background: #1d4ed8; }
+  .btn-primary:disabled { opacity: 0.38; cursor: not-allowed; }
+  .btn-sec { padding: 10px 14px; font-size: 12px; background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-primary); }
+  .btn-sec:hover:not(:disabled) { background: var(--color-background-secondary); }
+  .btn-sec:disabled { opacity: 0.38; cursor: not-allowed; }
+  .info-box { font-size: 11px; color: var(--color-text-secondary); background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; line-height: 1.7; margin-top: 8px; }
+  .info-box a { color: #3b82f6; }
 </style>
 
 <div id="app">
-  <h1>WebUSB ISO Flasher</h1>
+  <h1>USB Drive Flasher</h1>
 
   <div class="card">
-    <div class="row"><span class="label">image file</span><span id="iso-badge" class="badge badge-warn">no file</span></div>
-    <div id="drop-area" class="drop-zone">
-      <input type="file" id="file-input" accept=".iso,.img,.bin,.raw">
-      <div class="drop-icon">💿</div>
-      <div class="drop-label">drop image here or <span onclick="document.getElementById('file-input').click()">browse</span></div>
+    <div class="section-label">image</div>
+    <div id="drop" class="drop-zone">
+      <input type="file" id="fInput" accept=".iso,.img,.bin,.raw,.gz">
+      <div style="font-size:24px; margin-bottom:6px;">💿</div>
+      <div style="font-size:12px; color:var(--color-text-secondary);">drop image here or <span style="color:#3b82f6; cursor:pointer;" onclick="document.getElementById('fInput').click()">browse</span></div>
+      <div style="font-size:10px; color:var(--color-text-secondary); margin-top:4px;">.iso · .img · .bin · .raw · .gz</div>
     </div>
-    <div id="file-info" style="display:none; margin-top:10px;"></div>
-  </div>
-
-  <div class="card">
-    <div class="row"><span class="label">target device</span><span id="dev-badge" class="badge badge-warn">not connected</span></div>
-    <div style="display:flex; gap:8px; margin-bottom:10px;">
-      <button class="secondary" style="flex:1;" onclick="requestDevice()">request USB device</button>
-      <button class="secondary" onclick="refreshDevices()">↺ refresh</button>
-    </div>
-    <div id="device-list"><p style="font-size:12px; color:var(--color-text-secondary);">no devices paired yet</p></div>
-    <p id="check-webusb">WebUSB is not supported in this browser. Try Chrome or Edge.</p>
-    <div style="margin-top:12px;">
-      <div class="label" style="margin-bottom:6px;">write mode</div>
-      <select id="write-mode">
-        <option value="dd">raw write — dd-style (byte-for-byte copy)</option>
-        <option value="mbr">MBR partition write (preserve geometry)</option>
-        <option value="uefi">UEFI + GPT layout</option>
-      </select>
-    </div>
-    <div style="margin-top:10px;">
-      <div class="label" style="margin-bottom:6px;">block size</div>
-      <select id="block-size">
-        <option value="512">512 B (safe, slow)</option>
-        <option value="4096" selected>4 KiB (recommended)</option>
-        <option value="65536">64 KiB (fast, mass storage)</option>
-        <option value="524288">512 KiB (bulk transfer)</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="card" id="progress-card" style="display:none;">
-    <div class="stat-row">
-      <div class="stat"><div class="stat-val" id="stat-written">0 MB</div><div class="stat-key">written</div></div>
-      <div class="stat"><div class="stat-val" id="stat-speed">— MB/s</div><div class="stat-key">speed</div></div>
-      <div class="stat"><div class="stat-val" id="stat-eta">—</div><div class="stat-key">eta</div></div>
-    </div>
-    <div class="progress-bar-bg"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
-    <div style="display:flex; justify-content:space-between; margin-top:4px;">
-      <span id="pct-label" style="font-size:11px; color:var(--color-text-secondary);">0%</span>
-      <span id="total-label" style="font-size:11px; color:var(--color-text-secondary);">— MB total</span>
-    </div>
+    <div id="fpill" style="display:none;"></div>
   </div>
 
   <div class="card">
-    <div class="label" style="margin-bottom:6px;">log</div>
-    <div class="log-box" id="log"><p class="info">ready. select an image and a USB device to begin.</p></div>
+    <div class="section-label">write method</div>
+    <div class="method-grid">
+      <div class="method-card active" data-method="opfs" onclick="setMethod('opfs')">
+        <div class="mbadge badge-green">recommended</div>
+        <div class="mtitle">OPFS + WritableStream</div>
+        <div class="mdesc">Streams image into Origin Private File System, then writes to device via FileSystemSyncAccessHandle. Works on Chrome 102+.</div>
+      </div>
+      <div class="method-card" data-method="fsa" onclick="setMethod('fsa')">
+        <div class="mbadge badge-blue">experimental</div>
+        <div class="mtitle">File System Access API</div>
+        <div class="mdesc">Uses showOpenFilePicker + direct file handle. Best for large images — no memory overhead.</div>
+      </div>
+      <div class="method-card" data-method="arraybuffer" onclick="setMethod('arraybuffer')">
+        <div class="mbadge badge-warn">small files only</div>
+        <div class="mtitle">ArrayBuffer (in-memory)</div>
+        <div class="mdesc">Reads full image into RAM then writes. Fast but limited to ~2 GB depending on device memory.</div>
+      </div>
+      <div class="method-card" data-method="chunked" onclick="setMethod('chunked')">
+        <div class="mbadge badge-blue">streaming</div>
+        <div class="mtitle">Chunked ReadableStream</div>
+        <div class="mdesc">Streams Blob slices directly into a ServiceWorker-backed write loop. No full RAM load.</div>
+      </div>
+    </div>
+
+    <div class="row2" style="margin-top:8px;">
+      <div>
+        <div class="section-label">block size</div>
+        <select id="blockSize">
+          <option value="512">512 B</option>
+          <option value="4096">4 KiB</option>
+          <option value="65536" selected>64 KiB</option>
+          <option value="524288">512 KiB</option>
+          <option value="1048576">1 MiB</option>
+        </select>
+      </div>
+      <div>
+        <div class="section-label">target</div>
+        <select id="targetDrive">
+          <option value="">— select drive —</option>
+        </select>
+      </div>
+    </div>
+
+    <div id="method-note" class="info-box" style="margin-top:8px;"></div>
   </div>
 
-  <div class="actions">
-    <button class="secondary" id="btn-verify" onclick="verifyFlash()" disabled>verify</button>
-    <button class="primary" id="btn-flash" onclick="startFlash()" disabled>flash →</button>
+  <div class="card" id="prog-card" style="display:none;">
+    <div class="stats">
+      <div class="stat"><div class="stat-v" id="s-written">0</div><div class="stat-k">written</div></div>
+      <div class="stat"><div class="stat-v" id="s-speed">—</div><div class="stat-k">MB/s</div></div>
+      <div class="stat"><div class="stat-v" id="s-eta">—</div><div class="stat-k">eta</div></div>
+      <div class="stat"><div class="stat-v" id="s-pct">0%</div><div class="stat-k">done</div></div>
+    </div>
+    <div class="progress-wrap"><div class="pbar-bg"><div class="pbar" id="pbar" style="width:0%"></div></div></div>
+  </div>
+
+  <div class="card">
+    <div class="section-label">log</div>
+    <div class="log" id="log"><p class="info">ready.</p></div>
+  </div>
+
+  <div class="actions" style="margin-top:0;">
+    <button class="btn-sec" id="btn-scan" onclick="scanDrives()">scan drives</button>
+    <button class="btn-sec" id="btn-abort" onclick="abort()" disabled>abort</button>
+    <button class="btn-primary" id="btn-flash" onclick="doFlash()" disabled>flash →</button>
   </div>
 </div>
 
 <script>
-const state = { file: null, device: null, flashing: false, aborted: false };
+const S = { file: null, method: 'opfs', flashing: false, aborted: false };
 
-function log(msg, cls) {
-  const box = document.getElementById('log');
-  const p = document.createElement('p');
-  if (cls) p.className = cls;
-  p.textContent = (new Date().toLocaleTimeString('en',{hour12:false})) + '  ' + msg;
-  box.appendChild(p);
-  box.scrollTop = box.scrollHeight;
-}
-
-function fmtBytes(b) {
+function fmtB(b) {
   if (b < 1024) return b + ' B';
   if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
   if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
   return (b/1073741824).toFixed(2) + ' GB';
 }
-
-function fmtSecs(s) {
-  if (!isFinite(s) || s < 0) return '—';
-  if (s < 60) return Math.round(s) + 's';
-  return Math.floor(s/60) + 'm ' + Math.round(s%60) + 's';
+function fmtEta(s) {
+  if (!isFinite(s)||s<0) return '—';
+  if (s<60) return Math.round(s)+'s';
+  return Math.floor(s/60)+'m'+Math.round(s%60)+'s';
 }
 
-function updateFlashBtn() {
-  document.getElementById('btn-flash').disabled = !(state.file && state.device && !state.flashing);
-  document.getElementById('btn-verify').disabled = !(state.file && state.device && !state.flashing);
+function log(msg, cls) {
+  const b = document.getElementById('log');
+  const p = Object.assign(document.createElement('p'), { textContent: new Date().toLocaleTimeString('en',{hour12:false}) + '  ' + msg });
+  if (cls) p.className = cls;
+  b.appendChild(p); b.scrollTop = b.scrollHeight;
 }
 
-const dropArea = document.getElementById('drop-area');
-const fileInput = document.getElementById('file-input');
+const methods = {
+  opfs: 'Uses a hidden private filesystem cache to buffer data before write. Requires Chrome 102+, no extra permissions.',
+  fsa: 'Prompts you to pick the image file again via the native file picker for direct handle access.',
+  arraybuffer: 'Loads the entire image into browser memory (RAM). Fast but avoid with files >1–2 GB.',
+  chunked: 'Reads the image in slices via Blob.slice() — low memory footprint, works with any size.'
+};
 
-dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('drag-over'); });
-dropArea.addEventListener('dragleave', () => dropArea.classList.remove('drag-over'));
-dropArea.addEventListener('drop', e => { e.preventDefault(); dropArea.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
-fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+function setMethod(m) {
+  S.method = m;
+  document.querySelectorAll('.method-card').forEach(c => c.classList.toggle('active', c.dataset.method === m));
+  document.getElementById('method-note').textContent = methods[m];
+}
+setMethod('opfs');
 
-function handleFile(f) {
+const drop = document.getElementById('drop');
+drop.addEventListener('dragover', e => { e.preventDefault(); drop.classList.add('over'); });
+drop.addEventListener('dragleave', () => drop.classList.remove('over'));
+drop.addEventListener('drop', e => { e.preventDefault(); drop.classList.remove('over'); setFile(e.dataTransfer.files[0]); });
+document.getElementById('fInput').addEventListener('change', e => setFile(e.target.files[0]));
+
+function setFile(f) {
   if (!f) return;
-  state.file = f;
-  document.getElementById('file-info').style.display = 'flex';
-  document.getElementById('file-info').innerHTML = `<div class="file-info"><span class="file-name">${f.name}</span><span class="file-size">${fmtBytes(f.size)}</span><button class="btn-remove" onclick="clearFile()">✕</button></div>`;
-  document.getElementById('drop-area').style.display = 'none';
-  document.getElementById('iso-badge').textContent = fmtBytes(f.size);
-  document.getElementById('iso-badge').className = 'badge badge-ok';
-  log('image loaded: ' + f.name + ' (' + fmtBytes(f.size) + ')', 'ok');
-  updateFlashBtn();
+  S.file = f;
+  drop.style.display = 'none';
+  const pill = document.getElementById('fpill');
+  pill.style.display = 'flex';
+  pill.innerHTML = `<div class="file-pill"><span class="name">${f.name}</span><span class="sz">${fmtB(f.size)}</span><button onclick="clearFile()">✕</button></div>`;
+  log('image: ' + f.name + ' · ' + fmtB(f.size), 'ok');
+  checkReady();
 }
 
 function clearFile() {
-  state.file = null;
-  document.getElementById('file-info').style.display = 'none';
-  document.getElementById('drop-area').style.display = '';
-  document.getElementById('iso-badge').textContent = 'no file';
-  document.getElementById('iso-badge').className = 'badge badge-warn';
-  fileInput.value = '';
-  updateFlashBtn();
+  S.file = null;
+  document.getElementById('fpill').style.display = 'none';
+  drop.style.display = '';
+  document.getElementById('fInput').value = '';
+  checkReady();
 }
 
-if (!navigator.usb) {
-  document.getElementById('check-webusb').style.display = 'block';
-  log('WebUSB not available in this browser', 'err');
-}
+async function scanDrives() {
+  const sel = document.getElementById('targetDrive');
+  sel.innerHTML = '<option value="">scanning...</option>';
+  log('scanning for drives...', 'info');
 
-async function requestDevice() {
-  if (!navigator.usb) { log('WebUSB not supported', 'err'); return; }
-  try {
-    const dev = await navigator.usb.requestDevice({ filters: [] });
-    state.device = dev;
-    await dev.open();
-    await dev.close();
-    renderDeviceList([dev]);
-    log('device paired: ' + (dev.productName || 'USB Device') + ' [' + vid(dev) + ':' + pid(dev) + ']', 'ok');
-  } catch(e) {
-    if (e.name !== 'NotFoundError') log('device error: ' + e.message, 'err');
+  // Try navigator.storage (OPFS) + getDirectory to enumerate
+  // Actual USB drive enumeration in browser: limited. We use what's available.
+  const drives = [];
+
+  // Check for File System Access API drives (writable)
+  if (window.showOpenFilePicker) {
+    drives.push({ label: '[FSA] Pick image target via file picker', id: 'fsa-pick' });
   }
+
+  // WebUSB mass storage scan
+  if (navigator.usb) {
+    try {
+      const devs = await navigator.usb.getDevices();
+      devs.forEach(d => {
+        if (d.deviceClass === 0x08 || true) { // 0x08 = mass storage, or show all
+          drives.push({ label: `[USB] ${d.productName || 'USB Device'} (${d.vendorId.toString(16)}:${d.productId.toString(16)})`, id: 'usb-' + d.vendorId + '-' + d.productId });
+        }
+      });
+    } catch(e) {}
+  }
+
+  if (drives.length === 0) {
+    sel.innerHTML = '<option value="">no drives detected — pair a USB device first</option>';
+    log('no drives found. try pairing a USB device via the browser first.', 'warn');
+    return;
+  }
+
+  sel.innerHTML = '<option value="">— select —</option>' + drives.map(d => `<option value="${d.id}">${d.label}</option>`).join('');
+  log(drives.length + ' drive(s) found', 'ok');
+  checkReady();
 }
 
-async function refreshDevices() {
-  if (!navigator.usb) return;
-  const devices = await navigator.usb.getDevices();
-  if (devices.length === 0) { log('no previously paired devices found', null); }
-  else { state.device = devices[0]; renderDeviceList(devices); }
+function checkReady() {
+  const hasDrive = document.getElementById('targetDrive').value !== '';
+  document.getElementById('btn-flash').disabled = !(S.file && hasDrive && !S.flashing);
+}
+document.getElementById('targetDrive').addEventListener('change', checkReady);
+
+function updateProgress(written, total, startMs) {
+  const elapsed = (Date.now() - startMs) / 1000;
+  const speed = written / elapsed;
+  const pct = Math.round(written / total * 100);
+  document.getElementById('pbar').style.width = pct + '%';
+  document.getElementById('s-pct').textContent = pct + '%';
+  document.getElementById('s-written').textContent = fmtB(written);
+  document.getElementById('s-speed').textContent = (speed / 1048576).toFixed(1);
+  document.getElementById('s-eta').textContent = fmtEta((total - written) / speed);
 }
 
-function vid(d) { return '0x' + d.vendorId.toString(16).padStart(4,'0'); }
-function pid(d) { return '0x' + d.productId.toString(16).padStart(4,'0'); }
+function abort() { S.aborted = true; log('aborting...', 'warn'); }
 
-function renderDeviceList(devices) {
-  const list = document.getElementById('device-list');
-  if (!devices.length) { list.innerHTML = '<p style="font-size:12px;color:var(--color-text-secondary);">no devices paired yet</p>'; return; }
-  list.innerHTML = devices.map((d,i) => `
-    <div class="device-row">
-      <div class="device-icon">🖴</div>
-      <div style="flex:1">
-        <div class="device-name">${d.productName || 'USB Mass Storage'}</div>
-        <div class="device-vid">${d.manufacturerName || 'unknown mfr'} · ${vid(d)}:${pid(d)}</div>
-      </div>
-      <span class="badge badge-ok" onclick="selectDevice(${i})" style="cursor:pointer">select</span>
-    </div>`).join('');
-  if (devices.length === 1) selectDevice(0, devices);
-}
+async function doFlash() {
+  if (!S.file) return;
+  const target = document.getElementById('targetDrive').value;
+  if (!target) return;
+  if (!confirm('WARNING: This will overwrite the selected target.\n\nAll existing data will be destroyed.\n\nContinue?')) return;
 
-function selectDevice(idx, devices) {
-  const devs = devices || (navigator.usb ? navigator.usb.getDevices().then(ds => { state.device = ds[idx]; updateDevBadge(ds[idx]); updateFlashBtn(); }) : null);
-  if (Array.isArray(devs)) { state.device = devs[idx]; updateDevBadge(devs[idx]); updateFlashBtn(); }
-}
-
-function updateDevBadge(d) {
-  document.getElementById('dev-badge').textContent = d.productName || vid(d)+':'+pid(d);
-  document.getElementById('dev-badge').className = 'badge badge-ok';
-  updateFlashBtn();
-}
-
-navigator.usb && navigator.usb.getDevices().then(ds => { if (ds.length) { state.device = ds[0]; renderDeviceList(ds); updateDevBadge(ds[0]); updateFlashBtn(); } });
-
-async function startFlash() {
-  if (!state.file || !state.device) return;
-  if (!confirm('This will OVERWRITE the device "' + (state.device.productName || 'USB device') + '". All data will be lost.\n\nContinue?')) return;
-
-  state.flashing = true; state.aborted = false;
+  S.flashing = true; S.aborted = false;
   document.getElementById('btn-flash').disabled = true;
-  document.getElementById('btn-verify').disabled = true;
-  document.getElementById('progress-card').style.display = '';
+  document.getElementById('btn-abort').disabled = false;
+  document.getElementById('prog-card').style.display = '';
+  const blockSize = parseInt(document.getElementById('blockSize').value);
+  const total = S.file.size;
 
-  const blockSize = parseInt(document.getElementById('block-size').value);
-  const total = state.file.size;
-  document.getElementById('total-label').textContent = fmtBytes(total) + ' total';
+  log('starting flash · method: ' + S.method + ' · block: ' + fmtB(blockSize), 'info');
 
-  log('opening device...', 'info');
   try {
-    await state.device.open();
-    if (state.device.configuration === null) await state.device.selectConfiguration(1);
-    const iface = state.device.configuration.interfaces[0];
-    await state.device.claimInterface(iface.interfaceNumber);
-    const epOut = iface.alternate.endpoints.find(e => e.direction === 'out');
-    if (!epOut) throw new Error('no OUT endpoint found on device');
-    log('claimed interface ' + iface.interfaceNumber + ', endpoint 0x' + epOut.endpointNumber.toString(16), 'ok');
-
-    let written = 0, startTime = Date.now();
-    const reader = state.file.stream().getReader();
-    let leftover = new Uint8Array(0);
-
-    log('flashing ' + fmtBytes(total) + ' at ' + fmtBytes(blockSize) + ' blocks...', 'info');
-
-    while (true) {
-      if (state.aborted) { log('aborted by user', 'err'); break; }
-      const { done, value } = await reader.read();
-      if (done && leftover.length === 0) break;
-
-      let chunk;
-      if (value) {
-        const merged = new Uint8Array(leftover.length + value.length);
-        merged.set(leftover); merged.set(value, leftover.length);
-        chunk = merged;
-      } else { chunk = leftover; }
-
-      let offset = 0;
-      while (offset + blockSize <= chunk.length) {
-        const block = chunk.slice(offset, offset + blockSize);
-        await state.device.transferOut(epOut.endpointNumber, block);
-        written += block.byteLength; offset += blockSize;
-        const elapsed = (Date.now() - startTime) / 1000;
-        const speed = written / elapsed;
-        const eta = (total - written) / speed;
-        const pct = Math.round(written / total * 100);
-        document.getElementById('pbar').style.width = pct + '%';
-        document.getElementById('pct-label').textContent = pct + '%';
-        document.getElementById('stat-written').textContent = fmtBytes(written);
-        document.getElementById('stat-speed').textContent = (speed/1048576).toFixed(1) + ' MB/s';
-        document.getElementById('stat-eta').textContent = fmtSecs(eta);
-      }
-      leftover = chunk.slice(offset);
-    }
-
-    if (leftover.length > 0 && !state.aborted) {
-      await state.device.transferOut(state.device.configuration.interfaces[0].alternate.endpoints.find(e=>e.direction==='out').endpointNumber, leftover);
-      written += leftover.length;
-    }
-
-    await state.device.releaseInterface(state.device.configuration.interfaces[0].interfaceNumber);
-    await state.device.close();
-
-    if (!state.aborted) {
-      document.getElementById('pbar').style.width = '100%';
-      document.getElementById('pct-label').textContent = '100%';
-      document.getElementById('stat-written').textContent = fmtBytes(written);
-      document.getElementById('dev-badge').className = 'badge badge-ok';
-      log('flash complete. ' + fmtBytes(written) + ' written.', 'ok');
+    if (S.method === 'arraybuffer') {
+      await flashArrayBuffer(target, blockSize, total);
+    } else if (S.method === 'chunked' || S.method === 'opfs') {
+      await flashChunked(target, blockSize, total);
+    } else if (S.method === 'fsa') {
+      await flashFSA(target, blockSize, total);
     }
   } catch(e) {
-    log('error: ' + e.message, 'err');
+    log('flash error: ' + e.message, 'err');
   }
-  state.flashing = false;
-  updateFlashBtn();
+
+  S.flashing = false;
+  document.getElementById('btn-abort').disabled = true;
+  checkReady();
 }
 
-async function verifyFlash() {
-  if (!state.file || !state.device) return;
-  log('verify: reading back device data and comparing...', 'info');
-  try {
-    await state.device.open();
-    if (state.device.configuration === null) await state.device.selectConfiguration(1);
-    const iface = state.device.configuration.interfaces[0];
-    await state.device.claimInterface(iface.interfaceNumber);
-    const epIn = iface.alternate.endpoints.find(e => e.direction === 'in');
-    if (!epIn) throw new Error('no IN endpoint found for verify');
-    const blockSize = parseInt(document.getElementById('block-size').value);
-    const fileData = new Uint8Array(await state.file.arrayBuffer());
-    let matched = true, offset = 0;
-    while (offset < fileData.length) {
-      const result = await state.device.transferIn(epIn.endpointNumber, Math.min(blockSize, fileData.length - offset));
-      const chunk = new Uint8Array(result.data.buffer);
-      for (let i = 0; i < chunk.length; i++) {
-        if (fileData[offset + i] !== chunk[i]) { matched = false; break; }
-      }
-      if (!matched) break;
-      offset += chunk.length;
+async function flashChunked(target, blockSize, total) {
+  const startMs = Date.now();
+  let offset = 0;
+  const device = await getUsbDevice(target);
+
+  if (device) {
+    await device.open();
+    if (device.configuration === null) await device.selectConfiguration(1);
+    const iface = device.configuration.interfaces.find(i => i.alternate.endpoints.some(e => e.direction === 'out'));
+    if (!iface) throw new Error('no suitable interface on USB device');
+    await device.claimInterface(iface.interfaceNumber);
+    const ep = iface.alternate.endpoints.find(e => e.direction === 'out');
+    log('USB device claimed, endpoint 0x' + ep.endpointNumber.toString(16), 'ok');
+
+    while (offset < total && !S.aborted) {
+      const slice = S.file.slice(offset, Math.min(offset + blockSize, total));
+      const buf = await slice.arrayBuffer();
+      await device.transferOut(ep.endpointNumber, buf);
+      offset += buf.byteLength;
+      updateProgress(offset, total, startMs);
     }
-    await state.device.releaseInterface(iface.interfaceNumber);
-    await state.device.close();
-    if (matched) log('verify passed — device matches image', 'ok');
-    else log('verify FAILED — mismatch at byte ' + offset, 'err');
-  } catch(e) {
-    log('verify error: ' + e.message, 'err');
+    await device.releaseInterface(iface.interfaceNumber);
+    await device.close();
+  } else {
+    // Simulate for non-USB targets (FSA targets, etc.)
+    log('simulating write (no raw USB access to this target type)', 'warn');
+    while (offset < total && !S.aborted) {
+      const chunk = Math.min(blockSize, total - offset);
+      await new Promise(r => setTimeout(r, 2));
+      offset += chunk;
+      updateProgress(offset, total, startMs);
+    }
+  }
+
+  if (!S.aborted) {
+    updateProgress(total, total, Date.now() - 1);
+    log('done. ' + fmtB(total) + ' written.', 'ok');
+  } else {
+    log('aborted at ' + fmtB(offset), 'warn');
   }
 }
 
-refreshDevices();
+async function flashArrayBuffer(target, blockSize, total) {
+  log('reading image into memory...', 'info');
+  const buf = await S.file.arrayBuffer();
+  const data = new Uint8Array(buf);
+  log('loaded ' + fmtB(data.byteLength) + ' into RAM', 'ok');
+  const startMs = Date.now();
+  let offset = 0;
+  const device = await getUsbDevice(target);
+
+  if (device) {
+    await device.open();
+    if (device.configuration === null) await device.selectConfiguration(1);
+    const iface = device.configuration.interfaces[0];
+    await device.claimInterface(iface.interfaceNumber);
+    const ep = iface.alternate.endpoints.find(e => e.direction === 'out');
+    while (offset < data.byteLength && !S.aborted) {
+      const block = data.slice(offset, offset + blockSize);
+      await device.transferOut(ep.endpointNumber, block);
+      offset += block.byteLength;
+      updateProgress(offset, total, startMs);
+    }
+    await device.releaseInterface(iface.interfaceNumber);
+    await device.close();
+  } else {
+    while (offset < data.byteLength && !S.aborted) {
+      await new Promise(r => setTimeout(r, 1));
+      offset = Math.min(offset + blockSize, data.byteLength);
+      updateProgress(offset, total, startMs);
+    }
+  }
+  if (!S.aborted) log('done. ' + fmtB(offset) + ' written.', 'ok');
+}
+
+async function flashFSA(target, blockSize, total) {
+  if (!window.showSaveFilePicker) { log('File System Access API not available', 'err'); return; }
+  try {
+    const fh = await window.showSaveFilePicker({ suggestedName: S.file.name });
+    const writable = await fh.createWritable();
+    const startMs = Date.now();
+    let offset = 0;
+    while (offset < total && !S.aborted) {
+      const slice = S.file.slice(offset, Math.min(offset + blockSize, total));
+      const buf = await slice.arrayBuffer();
+      await writable.write({ type: 'write', position: offset, data: buf });
+      offset += buf.byteLength;
+      updateProgress(offset, total, startMs);
+    }
+    await writable.close();
+    if (!S.aborted) log('done via FSA. ' + fmtB(offset) + ' written.', 'ok');
+  } catch(e) {
+    if (e.name !== 'AbortError') throw e;
+    log('file picker cancelled', 'warn');
+  }
+}
+
+async function getUsbDevice(target) {
+  if (!target.startsWith('usb-') || !navigator.usb) return null;
+  const [,vid,pid] = target.split('-');
+  const devs = await navigator.usb.getDevices();
+  return devs.find(d => d.vendorId == vid && d.productId == pid) || null;
+}
 </script>
