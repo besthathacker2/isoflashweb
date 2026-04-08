@@ -1,0 +1,347 @@
+
+<style>
+  :root { --accent: #3b82f6; --accent-dim: #1d4ed8; --danger: #ef4444; --success: #22c55e; --warn: #f59e0b; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: var(--font-mono, monospace); }
+  #app { padding: 1.5rem; max-width: 640px; }
+  h1 { font-size: 13px; font-weight: 500; color: var(--color-text-secondary); letter-spacing: 0.12em; text-transform: uppercase; margin-bottom: 1.5rem; }
+  .card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-lg); padding: 1.25rem; margin-bottom: 1rem; }
+  .drop-zone { border: 1.5px dashed var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.15s, background 0.15s; }
+  .drop-zone:hover, .drop-zone.drag-over { border-color: var(--accent); background: rgba(59,130,246,0.06); }
+  .drop-zone input { display: none; }
+  .drop-icon { font-size: 28px; margin-bottom: 8px; }
+  .drop-label { font-size: 13px; color: var(--color-text-secondary); line-height: 1.6; }
+  .drop-label span { color: var(--accent); cursor: pointer; }
+  .file-info { display: flex; align-items: center; gap: 12px; padding: 10px 14px; background: var(--color-background-secondary); border-radius: var(--border-radius-md); font-size: 13px; }
+  .file-name { font-weight: 500; color: var(--color-text-primary); flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .file-size { color: var(--color-text-secondary); white-space: nowrap; }
+  .btn-remove { background: none; border: none; cursor: pointer; color: var(--color-text-secondary); font-size: 16px; padding: 2px 4px; }
+  .btn-remove:hover { color: var(--danger); }
+  .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 10px; }
+  .label { font-size: 12px; color: var(--color-text-secondary); }
+  .badge { font-size: 11px; padding: 3px 8px; border-radius: 99px; font-weight: 500; }
+  .badge-ok { background: rgba(34,197,94,0.12); color: var(--success); }
+  .badge-warn { background: rgba(245,158,11,0.12); color: var(--warn); }
+  .badge-err { background: rgba(239,68,68,0.12); color: var(--danger); }
+  .device-row { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--color-border-tertiary); }
+  .device-row:last-child { border-bottom: none; }
+  .device-icon { width: 28px; height: 28px; border-radius: 6px; background: var(--color-background-secondary); display: flex; align-items: center; justify-content: center; font-size: 14px; }
+  .device-name { font-size: 13px; font-weight: 500; flex: 1; }
+  .device-vid { font-size: 11px; color: var(--color-text-secondary); }
+  select { width: 100%; font-size: 13px; background: var(--color-background-primary); color: var(--color-text-primary); border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; }
+  .progress-bar-bg { height: 6px; background: var(--color-background-secondary); border-radius: 99px; overflow: hidden; }
+  .progress-bar { height: 100%; background: var(--accent); border-radius: 99px; transition: width 0.25s; }
+  .log-box { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 10px 12px; max-height: 140px; overflow-y: auto; font-size: 11px; line-height: 1.8; }
+  .log-box p { margin: 0; color: var(--color-text-secondary); }
+  .log-box p.ok { color: var(--success); }
+  .log-box p.err { color: var(--danger); }
+  .log-box p.info { color: var(--accent); }
+  .actions { display: flex; gap: 8px; margin-top: 1rem; }
+  button.primary { flex: 1; padding: 10px; font-size: 13px; font-weight: 500; background: var(--accent); color: #fff; border: none; border-radius: var(--border-radius-md); cursor: pointer; transition: background 0.15s, opacity 0.15s; }
+  button.primary:hover:not(:disabled) { background: var(--accent-dim); }
+  button.primary:disabled { opacity: 0.4; cursor: not-allowed; }
+  button.secondary { padding: 10px 16px; font-size: 13px; background: none; border: 0.5px solid var(--color-border-secondary); border-radius: var(--border-radius-md); cursor: pointer; color: var(--color-text-primary); transition: background 0.15s; }
+  button.secondary:hover:not(:disabled) { background: var(--color-background-secondary); }
+  button.secondary:disabled { opacity: 0.4; cursor: not-allowed; }
+  .stat-row { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 10px; }
+  .stat { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 8px 10px; }
+  .stat-val { font-size: 15px; font-weight: 500; color: var(--color-text-primary); }
+  .stat-key { font-size: 11px; color: var(--color-text-secondary); margin-top: 2px; }
+  #check-webusb { display: none; font-size: 11px; color: var(--danger); margin-top: 6px; }
+</style>
+
+<div id="app">
+  <h1>WebUSB ISO Flasher</h1>
+
+  <div class="card">
+    <div class="row"><span class="label">image file</span><span id="iso-badge" class="badge badge-warn">no file</span></div>
+    <div id="drop-area" class="drop-zone">
+      <input type="file" id="file-input" accept=".iso,.img,.bin,.raw">
+      <div class="drop-icon">💿</div>
+      <div class="drop-label">drop image here or <span onclick="document.getElementById('file-input').click()">browse</span></div>
+    </div>
+    <div id="file-info" style="display:none; margin-top:10px;"></div>
+  </div>
+
+  <div class="card">
+    <div class="row"><span class="label">target device</span><span id="dev-badge" class="badge badge-warn">not connected</span></div>
+    <div style="display:flex; gap:8px; margin-bottom:10px;">
+      <button class="secondary" style="flex:1;" onclick="requestDevice()">request USB device</button>
+      <button class="secondary" onclick="refreshDevices()">↺ refresh</button>
+    </div>
+    <div id="device-list"><p style="font-size:12px; color:var(--color-text-secondary);">no devices paired yet</p></div>
+    <p id="check-webusb">WebUSB is not supported in this browser. Try Chrome or Edge.</p>
+    <div style="margin-top:12px;">
+      <div class="label" style="margin-bottom:6px;">write mode</div>
+      <select id="write-mode">
+        <option value="dd">raw write — dd-style (byte-for-byte copy)</option>
+        <option value="mbr">MBR partition write (preserve geometry)</option>
+        <option value="uefi">UEFI + GPT layout</option>
+      </select>
+    </div>
+    <div style="margin-top:10px;">
+      <div class="label" style="margin-bottom:6px;">block size</div>
+      <select id="block-size">
+        <option value="512">512 B (safe, slow)</option>
+        <option value="4096" selected>4 KiB (recommended)</option>
+        <option value="65536">64 KiB (fast, mass storage)</option>
+        <option value="524288">512 KiB (bulk transfer)</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="card" id="progress-card" style="display:none;">
+    <div class="stat-row">
+      <div class="stat"><div class="stat-val" id="stat-written">0 MB</div><div class="stat-key">written</div></div>
+      <div class="stat"><div class="stat-val" id="stat-speed">— MB/s</div><div class="stat-key">speed</div></div>
+      <div class="stat"><div class="stat-val" id="stat-eta">—</div><div class="stat-key">eta</div></div>
+    </div>
+    <div class="progress-bar-bg"><div class="progress-bar" id="pbar" style="width:0%"></div></div>
+    <div style="display:flex; justify-content:space-between; margin-top:4px;">
+      <span id="pct-label" style="font-size:11px; color:var(--color-text-secondary);">0%</span>
+      <span id="total-label" style="font-size:11px; color:var(--color-text-secondary);">— MB total</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="label" style="margin-bottom:6px;">log</div>
+    <div class="log-box" id="log"><p class="info">ready. select an image and a USB device to begin.</p></div>
+  </div>
+
+  <div class="actions">
+    <button class="secondary" id="btn-verify" onclick="verifyFlash()" disabled>verify</button>
+    <button class="primary" id="btn-flash" onclick="startFlash()" disabled>flash →</button>
+  </div>
+</div>
+
+<script>
+const state = { file: null, device: null, flashing: false, aborted: false };
+
+function log(msg, cls) {
+  const box = document.getElementById('log');
+  const p = document.createElement('p');
+  if (cls) p.className = cls;
+  p.textContent = (new Date().toLocaleTimeString('en',{hour12:false})) + '  ' + msg;
+  box.appendChild(p);
+  box.scrollTop = box.scrollHeight;
+}
+
+function fmtBytes(b) {
+  if (b < 1024) return b + ' B';
+  if (b < 1048576) return (b/1024).toFixed(1) + ' KB';
+  if (b < 1073741824) return (b/1048576).toFixed(1) + ' MB';
+  return (b/1073741824).toFixed(2) + ' GB';
+}
+
+function fmtSecs(s) {
+  if (!isFinite(s) || s < 0) return '—';
+  if (s < 60) return Math.round(s) + 's';
+  return Math.floor(s/60) + 'm ' + Math.round(s%60) + 's';
+}
+
+function updateFlashBtn() {
+  document.getElementById('btn-flash').disabled = !(state.file && state.device && !state.flashing);
+  document.getElementById('btn-verify').disabled = !(state.file && state.device && !state.flashing);
+}
+
+const dropArea = document.getElementById('drop-area');
+const fileInput = document.getElementById('file-input');
+
+dropArea.addEventListener('dragover', e => { e.preventDefault(); dropArea.classList.add('drag-over'); });
+dropArea.addEventListener('dragleave', () => dropArea.classList.remove('drag-over'));
+dropArea.addEventListener('drop', e => { e.preventDefault(); dropArea.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+
+function handleFile(f) {
+  if (!f) return;
+  state.file = f;
+  document.getElementById('file-info').style.display = 'flex';
+  document.getElementById('file-info').innerHTML = `<div class="file-info"><span class="file-name">${f.name}</span><span class="file-size">${fmtBytes(f.size)}</span><button class="btn-remove" onclick="clearFile()">✕</button></div>`;
+  document.getElementById('drop-area').style.display = 'none';
+  document.getElementById('iso-badge').textContent = fmtBytes(f.size);
+  document.getElementById('iso-badge').className = 'badge badge-ok';
+  log('image loaded: ' + f.name + ' (' + fmtBytes(f.size) + ')', 'ok');
+  updateFlashBtn();
+}
+
+function clearFile() {
+  state.file = null;
+  document.getElementById('file-info').style.display = 'none';
+  document.getElementById('drop-area').style.display = '';
+  document.getElementById('iso-badge').textContent = 'no file';
+  document.getElementById('iso-badge').className = 'badge badge-warn';
+  fileInput.value = '';
+  updateFlashBtn();
+}
+
+if (!navigator.usb) {
+  document.getElementById('check-webusb').style.display = 'block';
+  log('WebUSB not available in this browser', 'err');
+}
+
+async function requestDevice() {
+  if (!navigator.usb) { log('WebUSB not supported', 'err'); return; }
+  try {
+    const dev = await navigator.usb.requestDevice({ filters: [] });
+    state.device = dev;
+    await dev.open();
+    await dev.close();
+    renderDeviceList([dev]);
+    log('device paired: ' + (dev.productName || 'USB Device') + ' [' + vid(dev) + ':' + pid(dev) + ']', 'ok');
+  } catch(e) {
+    if (e.name !== 'NotFoundError') log('device error: ' + e.message, 'err');
+  }
+}
+
+async function refreshDevices() {
+  if (!navigator.usb) return;
+  const devices = await navigator.usb.getDevices();
+  if (devices.length === 0) { log('no previously paired devices found', null); }
+  else { state.device = devices[0]; renderDeviceList(devices); }
+}
+
+function vid(d) { return '0x' + d.vendorId.toString(16).padStart(4,'0'); }
+function pid(d) { return '0x' + d.productId.toString(16).padStart(4,'0'); }
+
+function renderDeviceList(devices) {
+  const list = document.getElementById('device-list');
+  if (!devices.length) { list.innerHTML = '<p style="font-size:12px;color:var(--color-text-secondary);">no devices paired yet</p>'; return; }
+  list.innerHTML = devices.map((d,i) => `
+    <div class="device-row">
+      <div class="device-icon">🖴</div>
+      <div style="flex:1">
+        <div class="device-name">${d.productName || 'USB Mass Storage'}</div>
+        <div class="device-vid">${d.manufacturerName || 'unknown mfr'} · ${vid(d)}:${pid(d)}</div>
+      </div>
+      <span class="badge badge-ok" onclick="selectDevice(${i})" style="cursor:pointer">select</span>
+    </div>`).join('');
+  if (devices.length === 1) selectDevice(0, devices);
+}
+
+function selectDevice(idx, devices) {
+  const devs = devices || (navigator.usb ? navigator.usb.getDevices().then(ds => { state.device = ds[idx]; updateDevBadge(ds[idx]); updateFlashBtn(); }) : null);
+  if (Array.isArray(devs)) { state.device = devs[idx]; updateDevBadge(devs[idx]); updateFlashBtn(); }
+}
+
+function updateDevBadge(d) {
+  document.getElementById('dev-badge').textContent = d.productName || vid(d)+':'+pid(d);
+  document.getElementById('dev-badge').className = 'badge badge-ok';
+  updateFlashBtn();
+}
+
+navigator.usb && navigator.usb.getDevices().then(ds => { if (ds.length) { state.device = ds[0]; renderDeviceList(ds); updateDevBadge(ds[0]); updateFlashBtn(); } });
+
+async function startFlash() {
+  if (!state.file || !state.device) return;
+  if (!confirm('This will OVERWRITE the device "' + (state.device.productName || 'USB device') + '". All data will be lost.\n\nContinue?')) return;
+
+  state.flashing = true; state.aborted = false;
+  document.getElementById('btn-flash').disabled = true;
+  document.getElementById('btn-verify').disabled = true;
+  document.getElementById('progress-card').style.display = '';
+
+  const blockSize = parseInt(document.getElementById('block-size').value);
+  const total = state.file.size;
+  document.getElementById('total-label').textContent = fmtBytes(total) + ' total';
+
+  log('opening device...', 'info');
+  try {
+    await state.device.open();
+    if (state.device.configuration === null) await state.device.selectConfiguration(1);
+    const iface = state.device.configuration.interfaces[0];
+    await state.device.claimInterface(iface.interfaceNumber);
+    const epOut = iface.alternate.endpoints.find(e => e.direction === 'out');
+    if (!epOut) throw new Error('no OUT endpoint found on device');
+    log('claimed interface ' + iface.interfaceNumber + ', endpoint 0x' + epOut.endpointNumber.toString(16), 'ok');
+
+    let written = 0, startTime = Date.now();
+    const reader = state.file.stream().getReader();
+    let leftover = new Uint8Array(0);
+
+    log('flashing ' + fmtBytes(total) + ' at ' + fmtBytes(blockSize) + ' blocks...', 'info');
+
+    while (true) {
+      if (state.aborted) { log('aborted by user', 'err'); break; }
+      const { done, value } = await reader.read();
+      if (done && leftover.length === 0) break;
+
+      let chunk;
+      if (value) {
+        const merged = new Uint8Array(leftover.length + value.length);
+        merged.set(leftover); merged.set(value, leftover.length);
+        chunk = merged;
+      } else { chunk = leftover; }
+
+      let offset = 0;
+      while (offset + blockSize <= chunk.length) {
+        const block = chunk.slice(offset, offset + blockSize);
+        await state.device.transferOut(epOut.endpointNumber, block);
+        written += block.byteLength; offset += blockSize;
+        const elapsed = (Date.now() - startTime) / 1000;
+        const speed = written / elapsed;
+        const eta = (total - written) / speed;
+        const pct = Math.round(written / total * 100);
+        document.getElementById('pbar').style.width = pct + '%';
+        document.getElementById('pct-label').textContent = pct + '%';
+        document.getElementById('stat-written').textContent = fmtBytes(written);
+        document.getElementById('stat-speed').textContent = (speed/1048576).toFixed(1) + ' MB/s';
+        document.getElementById('stat-eta').textContent = fmtSecs(eta);
+      }
+      leftover = chunk.slice(offset);
+    }
+
+    if (leftover.length > 0 && !state.aborted) {
+      await state.device.transferOut(state.device.configuration.interfaces[0].alternate.endpoints.find(e=>e.direction==='out').endpointNumber, leftover);
+      written += leftover.length;
+    }
+
+    await state.device.releaseInterface(state.device.configuration.interfaces[0].interfaceNumber);
+    await state.device.close();
+
+    if (!state.aborted) {
+      document.getElementById('pbar').style.width = '100%';
+      document.getElementById('pct-label').textContent = '100%';
+      document.getElementById('stat-written').textContent = fmtBytes(written);
+      document.getElementById('dev-badge').className = 'badge badge-ok';
+      log('flash complete. ' + fmtBytes(written) + ' written.', 'ok');
+    }
+  } catch(e) {
+    log('error: ' + e.message, 'err');
+  }
+  state.flashing = false;
+  updateFlashBtn();
+}
+
+async function verifyFlash() {
+  if (!state.file || !state.device) return;
+  log('verify: reading back device data and comparing...', 'info');
+  try {
+    await state.device.open();
+    if (state.device.configuration === null) await state.device.selectConfiguration(1);
+    const iface = state.device.configuration.interfaces[0];
+    await state.device.claimInterface(iface.interfaceNumber);
+    const epIn = iface.alternate.endpoints.find(e => e.direction === 'in');
+    if (!epIn) throw new Error('no IN endpoint found for verify');
+    const blockSize = parseInt(document.getElementById('block-size').value);
+    const fileData = new Uint8Array(await state.file.arrayBuffer());
+    let matched = true, offset = 0;
+    while (offset < fileData.length) {
+      const result = await state.device.transferIn(epIn.endpointNumber, Math.min(blockSize, fileData.length - offset));
+      const chunk = new Uint8Array(result.data.buffer);
+      for (let i = 0; i < chunk.length; i++) {
+        if (fileData[offset + i] !== chunk[i]) { matched = false; break; }
+      }
+      if (!matched) break;
+      offset += chunk.length;
+    }
+    await state.device.releaseInterface(iface.interfaceNumber);
+    await state.device.close();
+    if (matched) log('verify passed — device matches image', 'ok');
+    else log('verify FAILED — mismatch at byte ' + offset, 'err');
+  } catch(e) {
+    log('verify error: ' + e.message, 'err');
+  }
+}
+
+refreshDevices();
+</script>
